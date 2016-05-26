@@ -9,7 +9,7 @@ function [Q,H] = arnoldi3(A,b,n)
 %   H    upper Hessenberg matrix, A*Q(:,1:n)=Q*H (n+1 by n)
 
 m = length(A);
-Q = zeros(m,n+1);  H = zeros(n+1,n)
+Q = zeros(m,n+1);  H = zeros(n+1,n);
 Q(:,1) = b/norm(b);
 for j = 1:n
   v = A*Q(:,j);
