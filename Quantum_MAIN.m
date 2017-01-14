@@ -1,5 +1,4 @@
-function ChemEProject1D
-
+function ChemEProject4
 format long
 
 clear
@@ -18,8 +17,9 @@ m = 1.62661e-27;                            % Kg
 
 t = cputime;
 
-N = 4;
-M = 8 * N + 1;
+N = 8;                                     % N + 1 basis functions are used, MUST BE EVEN
+kay = 6;                                    % number of energy levels retrieved with Lanczos
+M = 2 * N + 1;
 x = linspace(-L/2,L/2 - L/M,M);
 V = zeros(1,M);
 
@@ -28,7 +28,7 @@ for i = 1:M
 end
 
 freq = fft(V);                     % Take fft of the potential
-freq = circshift(freq,[1,4*N]);
+freq = circshift(freq,[1,N]);
 
 %Look at the potential and it's Fourier transform
 
@@ -48,39 +48,26 @@ freq = circshift(freq,[1,4*N]);
 %% Build Hamiltonian Matrix
 
 PW = -N/2:N/2;
-PW = PW([1:N/2, N/2+2:end]);
 
 % Build kinetic energy matrix
-Ham_KE = zeros(N,N);
-for k = 1:N
+Ham_KE = zeros(N+1,N+1);
+for k = 1:N+1
     Ham_KE(k,k) = hbar ^ 2 / 2 / m * L ^ -2 * 4 * pi^2 * PW(k)^2;
 end
 
 % Build potential energy matrix
-Ham_PE = zeros(N,N);
-freq
-for i = 1:N
-    for j = 1:N
+Ham_PE = zeros(N+1,N+1);
+
+for i = 1:N+1
+    for j = 1:N+1
         freqdiff = PW(i) - PW(j);
-        index = freqdiff + 4*N + 1;
+        index = freqdiff + N + 1;
         Ham_PE(i,j) = freq(index)/M;
     end
 end
 
-% % Build potential energy matrix
-% Ham_PE = zeros(N-1,N-1);
-% 
-% for i = 1:N-1
-%     for j = 1:N-1
-%         if j >= i
-%             Ham_PE(i,j) = freq(j-i+1)/N;
-%         else
-%             Ham_PE(i,j) = freq(i-j+1)'/N;
-%         end
-%     end
-% end
-
 Ham = Ham_KE + Ham_PE;
+Ham = real(Ham);
 
 FFTtime = cputime - t
 
@@ -89,23 +76,18 @@ FFTtime = cputime - t
 t = cputime;
 
 [Vecs, Vals] = eig(Ham);
+%[Vecs, Vals] = eigs(Ham,kay,'SM');
+%Vec = real(Vecs);
+%Vals = real(Vals);
 
 Eigtime = cputime - t
-
-% Compare energies 
-%avg_pot = freq(1)/N
-%approx_GSeng = min(diag(Vals))
-%GSeng = Eng(0)
-%Eng(1)             % look at coefficients from variational method
-
-
 %% Plot Electron Densities
 % and compare to analytical solution
 
-el = 0;                                 % energy level
+el = 0;                                 % energy level, only ground state wavefunction can be computed anyway
 s = 100;                                % sample for graphing
 xvec = linspace(-L/2,L/2,s);
-xscale = sqrt(hbar/m/omega)            % m
+xscale = sqrt(hbar/m/omega);            % m
 
 % Analytical Solution
 analwf = zeros(1,s);
@@ -115,71 +97,79 @@ for i = 1:s
     analpd(i) = abs(analwf(i))^2;
 end
 
-
-% xvec = linspace(-L/2,L/2,s);
-% yvec = zeros(1,s);
-% for i = 1:s
-%     yvec(i) = phi(1,xvec(i)) + phi(-1,xvec(i));
-% end
-% 
-% figure
-% plot(xvec,yvec)
-
-
 % Approximate Solution
-phimat = zeros(s,N);
+phimat = zeros(s,N+1);
 for i = 1:s
-    for j = 1:N
+    for j = 1:N+1
         phimat(i,j) = phi(PW(j),xvec(i));
     end
 end
-%Vecs(:,el+1)
+
 wfsln = Vecs(:,el+1);
-
-% %rofl
-% for i = N/2+1:N
-%     wfsln(i) = -wfsln(i);
-% end
-
 approxwf = phimat*wfsln;
+approxpd = zeros(1,s);
+for i = 1:s
+    approxpd(i) = abs(approxwf(i))^2;
+end
 
 % Non-dimensionalize
 xvec = xvec / xscale;
+engscale = hbar * omega / 2;
 analwf = analwf * sqrt(xscale);
+analpd = analpd * xscale;
 approxwf = approxwf * sqrt( xscale );
+approxpd = approxpd * xscale;
+
+% Flip the wavefunction if it's negative
+if approxwf(s/2) < 0
+    approxwf = - approxwf;
+end
+
+% Compare Energies
+E_approx = diag(Vals)';
+Eng_lvl = 0:N;
+E_anal = zeros(1,N+1);
+
+for i = 1:N+1
+    E_anal(i) = Eng(i-1);
+end
+
+E_anal = E_anal / engscale;
+E_approx = E_approx / engscale;
+%GSE_error = E_approx(1) - E_anal(1)
 
 figure
-plot(PW, real(wfsln))
+plot(PW, real(wfsln), 'o')
 xlabel('Quantum # of PW')
 ylabel('real part of Eigenvalue Coefficient')
 
 figure
-plot(PW, imag(wfsln))
-xlabel('Quantum # of PW')
-ylabel('imaginary part ofEigenvalue Coefficient')
-
-figure
-plot(xvec,analwf,xvec, approxwf)
+plot(xvec,analwf,xvec,approxwf)
 xlabel('Dimensionles Position')
 ylabel('Dimensionless Wavefunction')
 legend('Analytical', 'Approximate')
 
-a = real(approxwf);
-b = imag(approxwf);
 figure
-plot(a,b)
-xlabel('Real Part of WF')
-ylabel('Imaginary Part of WF')
+plot(xvec,analpd,xvec,approxpd)
+xlabel('Dimensionles Position')
+ylabel('Dimensionless PD')
+legend('Analytical', 'Approximate')
 
 figure
-plot(xvec,a)
-xlabel('Position')
-ylabel('Real Part of Wavefunction')
+plot(xvec,real(approxwf))
+xlabel('Dimensionles Position')
+ylabel('Real Dimensionless Wavefunction')
 
 figure
-plot(xvec,b)
-xlabel('Position')
-ylabel('Imaginary Part of Wavefunction')
+plot(xvec,imag(approxwf))
+xlabel('Dimensionles Position')
+ylabel('Imaginary Dimensionless Wavefunction')
+
+% figure
+% plot(Eng_lvl,E_anal,Eng_lvl, E_approx)
+% xlabel('Energy Level')
+% ylabel('Dimensionless Energy')
+% legend('Analytical', 'Approximate')
 
 end
 
@@ -192,14 +182,6 @@ V = 0.5 * m * omega^2 * x ^2;
 
 end
 
-function index = freqtoindex(f,M)
-    if f >= 0
-        index = f + 1;
-    else
-        index = f + 1 + M;
-    end
-end
-
 function wf = phi(n,x)
 
 global L
@@ -207,7 +189,6 @@ global L
 xp = x/L + 1/2;
 
 wf = 1/sqrt(L) * exp( 2 * pi * 1i * n * xp);
-wf = real(wf);
 
 end
 

@@ -2,6 +2,8 @@
 Solution of the Quantum harmonic oscillator using a plane wave basis set
 
 Final project for Spring 2013 CHEG827
+University of Delaware
+Department of Chemical and Biomolecular Engineering
 
 Shows how to formulate a basic quantum chemistry problem as an eigenvalue problem. 
 Computational time is saved by using eigs instead of eig in Matlab. Eigs uses Krylov
