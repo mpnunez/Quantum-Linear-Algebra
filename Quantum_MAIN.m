@@ -1,8 +1,8 @@
-function ChemEProject4
-format long
+function Quantum_MAIN
 
-clear
-clc
+format long;
+clear;
+clc;
 
 global L hbar omega m
 
@@ -17,7 +17,7 @@ m = 1.62661e-27;                            % Kg
 
 t = cputime;
 
-N = 8;                                     % N + 1 basis functions are used, MUST BE EVEN
+N = 16;                                     % N + 1 basis functions are used, MUST BE EVEN
 kay = 6;                                    % number of energy levels retrieved with Lanczos
 M = 2 * N + 1;
 x = linspace(-L/2,L/2 - L/M,M);
@@ -138,32 +138,65 @@ E_anal = E_anal / engscale;
 E_approx = E_approx / engscale;
 %GSE_error = E_approx(1) - E_anal(1)
 
+%% Plot results
+
+set(0,'defaultlinelinewidth',1.5)
+set(0,'defaultaxeslinewidth',2)
+
 figure
 plot(PW, real(wfsln), 'o')
 xlabel('Quantum # of PW')
-ylabel('real part of Eigenvalue Coefficient')
+ylabel('Real Eigenvalue Coeff.')
+ax = gca;
+ax.FontSize = 20;
 
 figure
-plot(xvec,analwf,xvec,approxwf)
+plot(PW, imag(wfsln), 'o')
+xlabel('Quantum # of PW')
+ylabel('Im Eigenvalue Coeff.')
+ax = gca;
+ax.FontSize = 20;
+
+figure
+plot(xvec, real(analwf), xvec, real(approxwf))
 xlabel('Dimensionles Position')
-ylabel('Dimensionless Wavefunction')
-legend('Analytical', 'Approximate')
+ylabel('Real Dimensionless WF')
+legend('Analytical', 'Numerical')
+legend('boxoff')
+ax = gca;
+ax.FontSize = 20;
+
+figure
+plot(xvec, imag(analwf), xvec, imag(approxwf))
+xlabel('Dimensionles Position')
+ylabel('Im Dimensionless WF')
+legend('Analytical', 'Numerical')
+legend('boxoff')
+ax = gca;
+ax.FontSize = 20;
 
 figure
 plot(xvec,analpd,xvec,approxpd)
 xlabel('Dimensionles Position')
-ylabel('Dimensionless PD')
-legend('Analytical', 'Approximate')
+ylabel('Dimensionless PDF')
+legend('Analytical', 'Numerical')
+legend('boxoff')
+ax = gca;
+ax.FontSize = 20;
 
-figure
-plot(xvec,real(approxwf))
-xlabel('Dimensionles Position')
-ylabel('Real Dimensionless Wavefunction')
-
-figure
-plot(xvec,imag(approxwf))
-xlabel('Dimensionles Position')
-ylabel('Imaginary Dimensionless Wavefunction')
+% figure
+% plot(xvec,real(approxwf))
+% xlabel('Dimensionles Position')
+% ylabel('Real Dimensionless WF')
+% ax = gca;
+% ax.FontSize = 20;
+% 
+% figure
+% plot(xvec,imag(approxwf))
+% xlabel('Dimensionles Position')
+% ylabel('IM Dimensionless WF')
+% ax = gca;
+% ax.FontSize = 20;
 
 % figure
 % plot(Eng_lvl,E_anal,Eng_lvl, E_approx)
@@ -172,6 +205,8 @@ ylabel('Imaginary Dimensionless Wavefunction')
 % legend('Analytical', 'Approximate')
 
 end
+
+%% Auxiliary functions
 
 function V = potential(x)
 
