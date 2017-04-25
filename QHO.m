@@ -94,9 +94,27 @@ classdef QHO
             
         end
         
+        %% Plot the potential
+        function qho = plot_pot(qho)
+
+            n_pp = 100;                                % number of points to use in the plot
+            x_vec = linspace(-qho.L/2, qho.L/2, n_pp);
+            V_vec = qho.harm_pot(x_vec);
+            
+            set(0,'defaultlinelinewidth',1.5)
+            set(0,'defaultaxeslinewidth',2)
+
+            %clf
+            plot(x_vec, V_vec)
+            xlabel('Position (m)')
+            ylabel('Potential (J)')
+            ax = gca;
+            ax.FontSize = 20;
+        end
+        
         %% Plot electron density in the domain
         
-        function qho = plot_density(qho)
+        function qho = plot_density(qho, toplot)
             
             eng_lev = 0;                                 % energy level, only ground state wavefunction can be computed anyway
             n_pp = 100;                                % number of points to use in the plot
@@ -119,17 +137,60 @@ classdef QHO
                 
             wf_sln = qho.eig_vecs(:, eng_lev+1);            % extract wavefunction vector from the matrix of eigenvectors
             numer_wf = phimat * wf_sln;
+            if numer_wf(round(n_pp/2)) < 0                   % Flip the sign of the wavefunction if it is negative
+                numer_wf = - numer_wf;
+            end
             numer_pd = abs(numer_wf) .^ 2;
             
             set(0,'defaultlinelinewidth',1.5)
             set(0,'defaultaxeslinewidth',2)
 
             %clf
-            plot(x_vec, anal_pd, x_vec, numer_pd)
+            if strcmp(toplot, 'density')
+                plot(x_vec, anal_pd, '--')
+                hold on
+                plot(x_vec, numer_pd, '-')
+                hold off
+                box('on')
+                ylabel('Electron density (1/m)')
+            elseif strcmp(toplot, 'wavefunction')
+                plot(x_vec, real(anal_wf), x_vec, real(numer_wf))
+                ylabel('Wavefunction (1/m^{1/2})')
+            else
+                disp('nothing')
+            end
             xlabel('Position (m)')
-            ylabel('Electron density (1/m)')
+            
             legend('Analytical', 'Numerical')
             legend('boxoff')
+            ax = gca;
+            ax.FontSize = 20;
+            
+        end
+        
+        %% Plot energy levels
+        function qho = plot_eng_lvls(qho)
+
+            set(0,'defaultlinelinewidth',1.5)
+            set(0,'defaultaxeslinewidth',2)
+
+            n_bais_vecs = 2 * qho.max_freq + 1;
+            lvl_vec = 0 : n_bais_vecs-1;
+            eng_lvl_anal = qho.qho_eng(lvl_vec);
+            eng_lvl_numer = diag(qho.eig_vals);
+            
+            %clf
+            
+            plot(lvl_vec, eng_lvl_anal, 'o')
+            hold on
+            plot(lvl_vec, eng_lvl_numer, 'x')
+            hold off
+            box('on')
+            xlabel('Energy level')
+            ylabel('Energy (J)')
+            legend('Analytical', 'Numerical')
+            legend('boxoff')
+            legend('Location', 'northwest')
             ax = gca;
             ax.FontSize = 20;
             

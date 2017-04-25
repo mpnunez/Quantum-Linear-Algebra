@@ -1,6 +1,8 @@
 # Quantum-Linear-Algebra
 Numerical solution to the quantum harmonic oscillator (QHO) using Hartree-Fock and a plane wave basis set
 
+![GUI](img.png)
+
 ### Description
 Matlab code which uses a GUI. The user chooses the number of electrons in the system
 and the size of the basis set (i.e. the number of plane waves). The user can choose
